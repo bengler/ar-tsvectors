@@ -1,9 +1,11 @@
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
 
+require 'ts_vectors/version'
+
 Gem::Specification.new do |s|
   s.name        = "ar-tsvectors"
-  s.version      = "0.0.3"
+  s.version      = TsVectors::VERSION
   s.authors     = ["Alexander Staubo"]
   s.email       = ["alex@bengler.no"]
   s.homepage    = ""
