@@ -52,8 +52,8 @@ Declaring a `tsvector` column `tags` will dynamically add the following methods:
 
 It's trivial to rank results according to how many values match a given row:
 
-    Post.with_any_tags(["pizza", "pepperoni"]).
-      order_by_tags_rank(["pizza", "pepperoni"]
+    @posts = Post.with_any_tags(["pizza", "pepperoni"]).
+      order_by_tags_rank(["pizza", "pepperoni"])
 
 This orders the rows such that rows matching _both_ `pizza` and `pepperoni` will be ordered above rows matching _either_ `pizza` or `pepperoni` but not both.
 
@@ -81,6 +81,6 @@ The values are normalized both when performing queries, and when assigning new v
 
 Currently, the library will always use the built-in `simple` configuration, which only performs basic normalization, and does not perform stemming.
 
-Due to a limitation in ActiveRecord, stored column values (on `INSERT` and `UPDATE`) are passed to PostgreSQL as strings, and are therefore *not* normalized using the text configuration's rules. This means that if you override the normalization function, make sure you always strip and downcase in addition to whatever other normalization you do, otherwise queries will not be able to match stored uppercase values.
+Due to a limitation in ActiveRecord, stored column values (on `INSERT` and `UPDATE`) are passed to PostgreSQL as strings, and are therefore *not* normalized using the text configuration's rules. This means that if you override the normalization function, you must make sure you always strip and downcase in addition to whatever other normalization you do, otherwise queries will potentially *not* match all rows.
 
 A forthcoming version of ActiveRecord will provide the plumbing that will allow us to solve this issue.
