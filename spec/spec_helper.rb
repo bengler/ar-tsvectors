@@ -22,15 +22,15 @@ RSpec.configure do |c|
 
   c.before :each do
     ActiveRecord::Base.connection.execute %(
-      create table if not exists things (
+      create table if not exists models_with_tsvector_format (
         id serial primary key,
         tags tsvector
       )
     )
     ActiveRecord::Base.connection.execute %(
-      create table if not exists thangs (
+      create table if not exists models_with_text_format (
         id serial primary key,
-        tags tsvector
+        tags text
       )
     )
   end

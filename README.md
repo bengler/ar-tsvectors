@@ -1,6 +1,6 @@
 # ActiveRecord support for ts_vectors
 
-This small library extends ActiveRecord to support PostgreSQL's `tsvector` type. PostgreSQL's `tsvector` stores an array of keywords that can be efficiently queried. The `tsvector` type is therefore particularly suitable for storing tags.
+This small library extends ActiveRecord to support PostgreSQL's `tsvector` type. PostgreSQL's `tsvector` stores an array of keywords that can be efficiently queried. The `tsvector` type is therefore particularly suitable for storing tags, since it's possible to store all tags in a single column instead of a table.
 
 ## Requirements
 
@@ -13,9 +13,9 @@ Add gem to your `Gemfile`:
 
     gem 'ar-tsvectors', :require => 'activerecord_tsvectors'
 
-To test, add a `tsvector` column to your table in a migration:
+To test, add a `text` column to your table in a migration:
 
-    add_column :posts, :tags, :tsvector
+    add_column :posts, :tags, :text
 
 Then extend your ActiveRecord model with a declaration:
 
@@ -34,9 +34,17 @@ You can now query based on the tags:
     Post.with_all_tags('pizza')
     Post.with_all_tags(['pizza', 'pepperoni'])
 
-Note that for queries to use indexes, you need to create an index on the column. This is slightly more complicated; again, in a migration:
+For queries to perform well, you must add an index on the column. This is slightly more complicated; again, in a migration:
 
-    execute("create index index_posts_on_tags on posts using gin(tags)")
+    execute("create index index_posts_on_tags on posts using gin(to_tsvector('simple', tags))")
+
+## Options
+
+The `ts_vector` mixin takes the following options:
+
+* `:configuation` - the name of the PostgreSQL text configuration to use. Defaults to `simple`, which is appropriate for keyword-type indexing.
+* `:format` - the format of the column, must be either `:text` (the default) or `:tsvector`.
+* `:normalize` - a proc that overrides the default normalization. It must take a single string and return a normalized copy of the string.
 
 ## Methods
 
@@ -77,10 +85,24 @@ The values are normalized both when performing queries, and when assigning new v
     post.tags
     => ['wtf']
 
-## Limitations
+## Using ts_vector directly
 
-Currently, the library will always use the built-in `simple` configuration, which only performs basic normalization, and does not perform stemming.
+It's possible to use the `tsvector` type for the column directly. In other words, in your migration would have something like:
 
-Due to a limitation in ActiveRecord, stored column values (on `INSERT` and `UPDATE`) are passed to PostgreSQL as strings, and are therefore *not* normalized using the text configuration's rules. This means that if you override the normalization function, you must make sure you always strip and downcase in addition to whatever other normalization you do, otherwise queries will potentially *not* match all rows.
+    add_column :posts, :tags, :tsvector
 
-A forthcoming version of ActiveRecord will provide the plumbing that will allow us to solve this issue.
+This is supported by supplying a format option to the `ts_vector` declaration in your model:
+
+    class Post < ActiveRecord::Base
+      ts_vector :tags, :format => :tsvector
+    end
+
+When you do this, the way you define a table index is slightly different:
+
+    execute("create index index_posts_on_tags on posts using gin(tags)")
+
+While using a `tsvector` column works, it has some drawbacks:
+
+* The `tsvector` type is lossy. When you assign values to a `tsvector`, the text will be tokenized by PostgreSQL's text parser, which will remove all punctuation and quotes from the text. In this system, a quoted tag such as `"New York"` will be split into two different tags `New` and `York`, and it's no longer possible to search for `New York` as a distinct tag.
+
+* Due to a limitation in ActiveRecord, stored column values (on `INSERT` and `UPDATE`) are passed to PostgreSQL as strings, and are therefore *not* normalized using the text configuration's rules. This means that if you override the normalization function, you must make sure you always strip and downcase in addition to whatever other normalization you do, otherwise queries will potentially *not* match all rows. A forthcoming version of ActiveRecord will provide the plumbing that will allow us to solve this issue.
