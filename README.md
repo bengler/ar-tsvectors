@@ -36,7 +36,7 @@ You can now query based on the tags:
 
 Note that for queries to use indexes, you need to create an index on the column. This is slightly more complicated; again, in a migration:
 
-    execute("create index index_posts_on_tags on posts using gin(to_tsvector('simple', tags))")
+    execute("create index index_posts_on_tags on posts using gin(tags)")
 
 ## Methods
 
