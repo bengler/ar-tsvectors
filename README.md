@@ -17,6 +17,8 @@ To test, add a `text` column to your table in a migration:
 
     add_column :posts, :tags, :text
 
+(Note how the column is declared as `text`. You could also have used `varchar`, of course.)
+
 Then extend your ActiveRecord model with a declaration:
 
     class Post < ActiveRecord::Base
@@ -85,7 +87,7 @@ The values are normalized both when performing queries, and when assigning new v
     post.tags
     => ['wtf']
 
-## Using ts_vector directly
+## Using `tsvector` directly
 
 It's possible to use the `tsvector` type for the column directly. In other words, in your migration would have something like:
 
